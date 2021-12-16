@@ -1,0 +1,207 @@
+-- Silent aim script Gui
+
+local ScreenGui = Instance.new("ScreenGui")
+local main = Instance.new("Frame")
+local Close = Instance.new("TextButton")
+local label = Instance.new("TextLabel")
+local label_2 = Instance.new("TextLabel")
+local SilentAim = Instance.new("TextButton")
+local ESP = Instance.new("TextButton")
+local open = Instance.new("TextButton")
+
+--Properties:
+
+ScreenGui.Parent = game.CoreGui
+
+main.Name = "main"
+main.Parent = ScreenGui
+main.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+main.BorderColor3 = Color3.fromRGB(0, 0, 255)
+main.Position = UDim2.new(0.355758399, 0, 0.250297964, 0)
+main.Size = UDim2.new(0, 521, 0, 410)
+main.Active = true
+main.Draggable = true
+main.Visible = false
+
+Close.Name = "Close"
+Close.Parent = main
+Close.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Close.Position = UDim2.new(0.946257174, 0, 0, 0)
+Close.Size = UDim2.new(0, 28, 0, 29)
+Close.Font = Enum.Font.SourceSansSemibold
+Close.Text = "X"
+Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+Close.TextScaled = true
+Close.TextSize = 14.000
+Close.TextWrapped = true
+
+label.Name = "label"
+label.Parent = main
+label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+label.BorderColor3 = Color3.fromRGB(0, 0, 0)
+label.Size = UDim2.new(0, 493, 0, 29)
+label.Font = Enum.Font.GothamBold
+label.Text = "Da Hood Silent Aim"
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextScaled = true
+label.TextSize = 14.000
+label.TextWrapped = true
+
+label_2.Name = "label"
+label_2.Parent = main
+label_2.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+label_2.BorderColor3 = Color3.fromRGB(0, 0, 255)
+label_2.Position = UDim2.new(0, 0, 0.873170733, 0)
+label_2.Size = UDim2.new(0, 521, 0, 52)
+label_2.Font = Enum.Font.GothamBold
+label_2.Text = "Dm me if theres any problems | cans#2942"
+label_2.TextColor3 = Color3.fromRGB(0, 0, 0)
+label_2.TextScaled = true
+label_2.TextSize = 14.000
+label_2.TextWrapped = true
+
+SilentAim.Name = "Silent Aim"
+SilentAim.Parent = main
+SilentAim.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+SilentAim.BorderColor3 = Color3.fromRGB(0, 0, 0)
+SilentAim.Position = UDim2.new(0.101727448, 0, 0.319512188, 0)
+SilentAim.Size = UDim2.new(0, 163, 0, 46)
+SilentAim.Font = Enum.Font.GothamBold
+SilentAim.Text = "Silent Aim"
+SilentAim.TextColor3 = Color3.fromRGB(255, 255, 255)
+SilentAim.TextScaled = true
+SilentAim.TextSize = 14.000
+SilentAim.MouseButton1Down:connect(function()
+	local Aiming = loadstring(game:HttpGet("https://raw.githubusercontent.com/Stefanuk12/ROBLOX/master/Universal/Aiming/Module.lua"))()
+	Aiming.TeamCheck(false)
+
+	-- // Services
+	local Workspace = game:GetService("Workspace")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local UserInputService = game:GetService("UserInputService")
+
+	-- // Vars
+	local LocalPlayer = Players.LocalPlayer
+	local Mouse = LocalPlayer:GetMouse()
+	local CurrentCamera = Workspace.CurrentCamera
+
+	local DaHoodSettings = {
+		SilentAim = true,
+		AimLock = true,
+		Prediction = 0.165,
+		AimLockKeybind = Enum.KeyCode.E
+	}
+	getgenv().DaHoodSettings = DaHoodSettings
+
+	-- // Overwrite to account downed
+	function Aiming.Check()
+		-- // Check A
+		if not (Aiming.Enabled == true and Aiming.Selected ~= LocalPlayer and Aiming.SelectedPart ~= nil) then
+			return false
+		end
+
+		-- // Check if downed
+		local Character = Aiming.Character(Aiming.Selected)
+		local KOd = Character:WaitForChild("BodyEffects")["K.O"].Value
+		local Grabbed = Character:FindFirstChild("GRABBING_CONSTRAINT") ~= nil
+
+		-- // Check B
+		if (KOd or Grabbed) then
+			return false
+		end
+
+		-- //
+		return true
+	end
+
+	-- // Hook
+	local __index
+	__index = hookmetamethod(game, "__index", function(t, k)
+		-- // Check if it trying to get our mouse's hit or target and see if we can use it
+		if (t:IsA("Mouse") and (k == "Hit" or k == "Target") and Aiming.Check()) then
+			-- // Vars
+			local SelectedPart = Aiming.SelectedPart
+
+			-- // Hit/Target
+			if (DaHoodSettings.SilentAim and (k == "Hit" or k == "Target")) then
+				-- // Hit to account prediction
+				local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+				-- // Return modded val
+				return (k == "Hit" and Hit or SelectedPart)
+			end
+		end
+
+		-- // Return
+		return __index(t, k)
+	end)
+
+	-- // Aimlock
+	RunService:BindToRenderStep("AimLock", 0, function()
+		if (DaHoodSettings.AimLock and Aiming.Check() and UserInputService:IsKeyDown(DaHoodSettings.AimLockKeybind)) then
+			-- // Vars
+			local SelectedPart = Aiming.SelectedPart
+
+			-- // Hit to account prediction
+			local Hit = SelectedPart.CFrame + (SelectedPart.Velocity * DaHoodSettings.Prediction)
+
+			-- // Set the camera to face towards the Hit
+			CurrentCamera.CFrame = CFrame.lookAt(CurrentCamera.CFrame.Position, Hit.Position)
+		end
+	end)
+end)
+
+
+ESP.Name = "ESP"
+ESP.Parent = main
+ESP.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ESP.BorderColor3 = Color3.fromRGB(0, 0, 0)
+ESP.Position = UDim2.new(0.585412681, 0, 0.319512188, 0)
+ESP.Size = UDim2.new(0, 163, 0, 46)
+ESP.Font = Enum.Font.GothamBold
+ESP.Text = "ESP"
+ESP.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESP.TextScaled = true
+ESP.TextSize = 14.000
+ESP.MouseButton1Down:connect(function()
+	loadstring(game:HttpGet("https://cdn.wearedevs.net/scripts/WRD ESP.txt"))()
+end)
+
+
+open.Name = "open"
+open.Parent = ScreenGui
+open.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+open.BorderColor3 = Color3.fromRGB(0, 0, 0)
+open.Position = UDim2.new(0, 0, 0.525625765, 0)
+open.Size = UDim2.new(0, 95, 0, 37)
+open.Font = Enum.Font.GothamBold
+open.Text = "Open"
+open.TextColor3 = Color3.fromRGB(255, 255, 255)
+open.TextScaled = true
+open.TextSize = 14.000
+open.TextWrapped = true
+
+-- Scripts:
+
+local function KFCLPFE_fake_script() -- Close.LocalScript 
+	local script = Instance.new('LocalScript', Close)
+
+	local main = script.Parent.Parent
+	
+	script.Parent.MouseButton1Click:Connect(function()
+		main.Visible = false
+	end)
+end
+coroutine.wrap(KFCLPFE_fake_script)()
+local function NRXPPNN_fake_script() -- open.LocalScript 
+	local script = Instance.new('LocalScript', open)
+
+	local main = script.Parent.Parent.main
+	
+	script.Parent.MouseButton1Click:Connect(function()
+		main.Visible = true
+	end)
+end
+coroutine.wrap(NRXPPNN_fake_script)()
